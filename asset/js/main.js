@@ -294,7 +294,8 @@ function initAboutCarousel() {
     if (!aboutCarouselTrack) return;
     
     let currentSlide = 0;
-    let aboutSlideInterval;
+    let aboutSlideInterval = null;
+    let isCarouselVisible = false;
 
     const images = [
         'asset/image/teamPic.jpg',
@@ -332,23 +333,58 @@ function initAboutCarousel() {
         });
     }
     
-    aboutSlideInterval = setInterval(nextAboutSlide, 3000);
-   
+    function startCarousel() {
+        if (aboutSlideInterval) {
+            clearInterval(aboutSlideInterval);
+        }
+        aboutSlideInterval = setInterval(nextAboutSlide, 3000);
+    }
+    
+    function stopCarousel() {
+        if (aboutSlideInterval) {
+            clearInterval(aboutSlideInterval);
+            aboutSlideInterval = null;
+        }
+    }
+    
+    function checkCarouselVisibility() {
+        const carouselRect = aboutCarouselTrack.getBoundingClientRect();
+        const isVisible = (
+            carouselRect.top < window.innerHeight * 0.8 &&
+            carouselRect.bottom > window.innerHeight * 0.2
+        );
+        
+        if (isVisible && !isCarouselVisible) {
+            isCarouselVisible = true;
+            startCarousel();
+        } else if (!isVisible && isCarouselVisible) {
+            isCarouselVisible = false;
+            stopCarousel();
+        }
+    }
+    
     aboutIndicators.forEach((indicator, index) => {
         indicator.addEventListener('click', () => {
-            clearInterval(aboutSlideInterval);
+            stopCarousel();
             goToSlide(index);
-            aboutSlideInterval = setInterval(nextAboutSlide, 3000);
+            startCarousel();
         });
     });
-  
+    
     aboutCarouselTrack.addEventListener('mouseenter', () => {
-        clearInterval(aboutSlideInterval);
+        stopCarousel();
     });
     
     aboutCarouselTrack.addEventListener('mouseleave', () => {
-        aboutSlideInterval = setInterval(nextAboutSlide, 3000);
+        if (isCarouselVisible) {
+            startCarousel();
+        }
     });
+    
+    window.addEventListener('scroll', checkCarouselVisibility);
+    window.addEventListener('resize', checkCarouselVisibility);
+    
+    checkCarouselVisibility();
 }
 
 document.addEventListener('DOMContentLoaded', initAboutCarousel);
